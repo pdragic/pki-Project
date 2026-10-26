@@ -1,0 +1,73 @@
+:root {
+  --leaf: #2e7d32;
+  --leaf-light: #66bb6a;
+}
+
+.page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+.muted { color: var(--bs-secondary-color); }
+
+/* ---------- Kartice biljaka (Home + Plants) ---------- */
+.plant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1.25rem;
+}
+.plant-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.plant-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--leaf-light);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  color: inherit;
+}
+.plant-img { background: #eef6ee; display: flex; justify-content: center; padding: .75rem; }
+.plant-img img { width: 100%; height: 150px; object-fit: contain; }
+.plant-body { padding: .85rem 1rem 1rem; display: flex; flex-direction: column; gap: .3rem; }
+.plant-body h3 { font-size: 1.05rem; margin: 0; }
+.plant-body .price { font-weight: 700; color: var(--leaf-light); }
+.plant-body .stars { color: #ffc107; }
+
+/* ---------- Filteri u PlantsView ---------- */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: .75rem;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+.filters label { display: flex; flex-direction: column; gap: .25rem; font-size: .85rem; color: var(--bs-secondary-color); }
+.filters input, .filters select {
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+  padding: .4rem .7rem;
+}
+
+/* ---------- Forme (prijava, registracija, profil) ---------- */
+.auth-form { display: flex; flex-direction: column; gap: .75rem; }
+.auth-form label { display: flex; flex-direction: column; gap: .25rem; }
+.auth-form input {
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+  padding: .45rem .75rem;
+}
+.auth-form input.is-invalid { border-color: var(--bs-danger); }
+.auth-form .invalid-feedback { font-size: .8rem; }
+.swal2-container.swal2-top-end {
+  top: 64px !important;
+}
