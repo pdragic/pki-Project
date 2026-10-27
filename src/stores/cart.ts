@@ -9,9 +9,8 @@ export interface Reservation {
   price: number
   imageUrl: string
   quantity: number
-  stock?: number // stock_quantity iz API-ja
+  stock?: number 
   status: 'rezervisano' | 'pristiglo' | 'otkazano'
-  rating?: number // samo kad je 'pristiglo'
 }
 
 const cartKey = (userId: string) => `biljkara_cart_${userId}`
@@ -21,7 +20,6 @@ function readCart(userId?: string): Reservation[] {
   try {
     const raw = localStorage.getItem(cartKey(userId))
     const list = raw ? (JSON.parse(raw) as Partial<Reservation>[]) : []
-    // stare stavke (bez id) dobijaju id, da ništa ne pukne
     return list.map(r => ({ ...r, id: r.id ?? crypto.randomUUID() }) as Reservation)
   } catch {
     return []
@@ -44,7 +42,6 @@ export const useCartStore = defineStore('cart', () => {
       try {
         localStorage.setItem(cartKey(auth.user.id), JSON.stringify(v))
       } catch {
-        // ignorisi
       }
     },
     { deep: true },
@@ -56,14 +53,12 @@ export const useCartStore = defineStore('cart', () => {
       .filter(i => i.status !== 'otkazano')
       .reduce((s, i) => s + i.price * i.quantity, 0))
 
-  // koliko komada te biljke je već pristiglo
   function arrivedQty(plantId: number) {
     return items.value
       .filter(i => i.plantId === plantId && i.status === 'pristiglo')
       .reduce((s, i) => s + i.quantity, 0)
   }
 
-  // najveća količina koja sme da bude rezervisana (stanje minus pristiglo)
   function maxFor(plantId: number, stock?: number) {
     if (stock === undefined) return Infinity
     return Math.max(0, stock - arrivedQty(plantId))
@@ -88,7 +83,6 @@ export const useCartStore = defineStore('cart', () => {
     return items.value.find(i => i.id === id)
   }
 
-  // vraća false ako nova količina nije dozvoljena (manja od 1 ili veća od slobodnog stanja)
   function setQuantity(id: string, q: number): boolean {
     const it = find(id)
     if (!it || it.status !== 'rezervisano' || q < 1) return false
@@ -106,19 +100,14 @@ export const useCartStore = defineStore('cart', () => {
       items.value = items.value.filter(i => i.id !== id)
     }
   }
-  function rate(id: string, rating: number) {
-    const it = find(id)
-    if (it && it.status === 'pristiglo') it.rating = rating
-  }
-  // samo za demonstraciju prototipa
   function simulateArrival(id: string) {
     const it = find(id)
     if (it && it.status === 'rezervisano') it.status = 'pristiglo'
   }
 
   return {
-    items, count, total,
+    items, count,
     arrivedQty, maxFor, getActive, hasActive, add,
-    setQuantity, cancel, remove, rate, simulateArrival,
+    setQuantity, cancel, remove, simulateArrival,
   }
 })

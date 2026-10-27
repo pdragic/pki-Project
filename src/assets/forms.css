@@ -1,0 +1,13 @@
+.auth-form { display: flex; flex-direction: column; gap: .75rem; }
+.auth-form label { display: flex; flex-direction: column; gap: .25rem; }
+.auth-form input {
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+  padding: .45rem .75rem;
+}
+.auth-form input.is-invalid { border-color: var(--bs-danger); }
+.auth-form .invalid-feedback { font-size: .8rem; }
+
+.fav-chips { display: flex; flex-wrap: wrap; gap: .5rem; }

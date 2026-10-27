@@ -1,0 +1,15 @@
+:root {
+  --leaf-light: #66bb6a;
+}
+
+.page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+.page-form { max-width: 480px; }
+.muted { color: var(--bs-secondary-color); }
+.stars { color: #ffc107; }
+
+.swal2-container.swal2-top-end { top: 64px !important; }
+
+.rv-stars { display: flex; justify-content: center; gap: .25rem; font-size: 2rem; margin: .5rem 0; }
+.rv-star { background: none; border: 0; color: #ffc107; cursor: pointer; padding: 0 .1rem; }
+.rv-star:hover { transform: scale(1.15); }
+.swal2-textarea { background: var(--bs-body-bg) !important; color: var(--bs-body-color) !important; }

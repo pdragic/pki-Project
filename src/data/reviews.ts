@@ -14,7 +14,6 @@ const texts = [
   'Isporuka je kasnila, ali biljka je u redu.',
 ]
 
-// Deterministički: ista biljka uvek ima iste recenzije
 export function getReviews(plantId: number): Review[] {
   const count = (plantId % 3) + 1
   return Array.from({ length: count }, (_, i) => ({
@@ -22,9 +21,4 @@ export function getReviews(plantId: number): Review[] {
     rating: ((plantId * 3 + i * 2) % 3) + 3, // 3..5
     text: texts[(plantId + i * 2) % texts.length]!,
   }))
-}
-
-export function averageRating(plantId: number): number {
-  const r = getReviews(plantId)
-  return r.reduce((s, x) => s + x.rating, 0) / r.length
 }

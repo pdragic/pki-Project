@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePlantsStore } from '@/stores/plants'
 import { rules } from '@/utils/validators'
 import { toast, errorDialog, successDialog } from '@/utils/alert'
+import FavoritesPicker from '@/components/FavoritesPicker.vue'
 
 const auth = useAuthStore()
+const plants = usePlantsStore()
 const router = useRouter()
+
+onMounted(() => plants.load())
 
 const keys = ['name', 'email', 'phone', 'address', 'password', 'confirm'] as const
 type Key = (typeof keys)[number]
@@ -17,6 +22,15 @@ const form = reactive<Record<Key, string>>({
 const touched = reactive<Record<Key, boolean>>({
   name: false, email: false, phone: false, address: false, password: false, confirm: false,
 })
+
+const favorites = ref<string[]>([])
+const favTouched = ref(false)
+// ako se vrste nisu učitale (API nedostupan), ne blokiramo registraciju
+const favError = computed(() =>
+  plants.categories.length && !favorites.value.length
+    ? 'Izaberite bar jednu omiljenu vrstu biljaka.'
+    : '',
+)
 
 const fields: { key: Key; label: string; icon: string; type: string; auto: string }[] = [
   { key: 'name', label: 'Ime i prezime', icon: 'fa-user', type: 'text', auto: 'name' },
@@ -37,10 +51,11 @@ const errors = computed<Record<Key, string>>(() => ({
 }))
 
 const showError = (k: Key) => touched[k] && errors.value[k] !== ''
-const isValid = computed(() => keys.every(k => errors.value[k] === ''))
+const isValid = computed(() => keys.every(k => errors.value[k] === '') && favError.value === '')
 
 async function submit() {
   keys.forEach(k => (touched[k] = true))
+  favTouched.value = true
   if (!isValid.value) {
     toast('Proverite označena polja.', 'error')
     return
@@ -51,6 +66,7 @@ async function submit() {
     email: form.email.trim(),
     phone: form.phone.trim(),
     address: form.address.trim(),
+    favorites: [...favorites.value],
     password: form.password,
   })
 
@@ -64,7 +80,7 @@ async function submit() {
 </script>
 
 <template>
-  <main class="page" style="max-width: 460px">
+  <main class="page page-form">
     <h1 class="mb-3"><i class="fa-solid fa-user-plus"></i> Registracija</h1>
 
     <form class="auth-form" novalidate @submit.prevent="submit">
@@ -79,6 +95,12 @@ async function submit() {
         />
         <div class="invalid-feedback">{{ errors[f.key] }}</div>
       </label>
+
+      <div class="d-flex flex-column gap-2">
+        <span><i class="fa-solid fa-heart"></i> Omiljene vrste biljaka</span>
+        <FavoritesPicker v-model="favorites" :options="plants.categories" />
+        <div v-if="favTouched && favError" class="text-danger small">{{ favError }}</div>
+      </div>
 
       <button type="submit" class="btn btn-success">
         <i class="fa-solid fa-user-plus"></i> Registruj se

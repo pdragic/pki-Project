@@ -46,13 +46,11 @@ const router = createRouter({
 let routeToken = 0
 
 router.beforeEach((to) => {
-  // 1. zaštita ruta (preusmeravanje na prijavu)
   const auth = useAuthStore()
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 
-  // 2. prozor za učitavanje stranice
   routeToken = showLoading(
     to.meta.loadingTitle ?? 'Učitavanje stranice...',
     to.meta.loadingText ?? 'Molimo sačekajte trenutak.',

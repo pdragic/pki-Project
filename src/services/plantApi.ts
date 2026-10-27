@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 export interface Plant {
   id: number
   name: string
@@ -25,14 +27,14 @@ export interface Plant {
   season: string
 }
 
-const BASE_URL = 'https://plants.pequla.com/api'
-
-async function request<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return (await res.json()) as T
-}
+const api = axios.create({
+  baseURL: 'https://plants.pequla.com/api',
+  timeout: 10000,
+})
 
 export const PlantApi = {
-  getAll: () => request<Plant[]>('/plants'),
+  async getAll(): Promise<Plant[]> {
+    const res = await api.get<Plant[]>('/plants')
+    return res.data
+  },
 }

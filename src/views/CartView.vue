@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useCartStore, type Reservation } from '@/stores/cart'
+import { useReviewsStore } from '@/stores/reviews'
 import { confirmDialog, toast } from '@/utils/alert'
 
 const cart = useCartStore()
+const rv = useReviewsStore()
 
 type Filter = 'sve' | Reservation['status']
 const filter = ref<Filter>('sve')
@@ -86,10 +88,9 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
 </script>
 
 <template>
-  <main class="page">
+  <main class="page cart-page">
     <h1 class="mb-3"><i class="fa-solid fa-basket-shopping"></i> Korpa rezervacija</h1>
 
-    <!-- prazna korpa -->
     <div v-if="!cart.items.length" class="empty">
       <i class="fa-solid fa-cart-shopping"></i>
       <h2>Vaša korpa je prazna</h2>
@@ -100,7 +101,6 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
     </div>
 
     <div v-else class="row g-4">
-      <!-- leva kolona: stavke -->
       <div class="col-lg-8">
         <ul class="nav nav-pills mb-3 flex-wrap gap-1">
           <li v-for="t in tabs" :key="t.key" class="nav-item">
@@ -130,7 +130,6 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
 
               <div class="muted small">{{ i.price }} RSD po komadu</div>
 
-              <!-- količina: samo u statusu 'rezervisano' -->
               <div v-if="i.status === 'rezervisano'" class="qty" role="group" aria-label="Količina">
                 <button class="btn btn-sm btn-outline-secondary" :disabled="i.quantity <= 1"
                         aria-label="Smanji količinu" @click="cart.setQuantity(i.id, i.quantity - 1)">
@@ -151,13 +150,19 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
                 već pristiglo {{ cart.arrivedQty(i.plantId) }}</template>).
               </div>
 
-              <!-- ocena: samo u statusu 'pristiglo' -->
               <div v-if="i.status === 'pristiglo'" class="rate">
                 <span class="muted small">Vaša ocena:</span>
-                <button v-for="n in 5" :key="n" class="star-btn"
-                        :aria-label="`Oceni sa ${n}`" @click="cart.rate(i.id, n)">
-                  <i :class="[i.rating && n <= i.rating ? 'fa-solid' : 'fa-regular', 'fa-star']"></i>
+                <span class="stars">
+                  <i v-for="n in 5" :key="n"
+                     :class="[(rv.mineFor(i.plantId)?.rating ?? 0) >= n ? 'fa-solid' : 'fa-regular', 'fa-star']"></i>
+                </span>
+                <button class="btn btn-sm btn-outline-warning ms-1" @click="rv.openReview(i.plantId, i.name)">
+                  <i class="fa-solid fa-pen"></i>
+                  {{ rv.mineFor(i.plantId) ? 'Izmeni recenziju' : 'Oceni' }}
                 </button>
+              </div>
+              <div v-if="i.status === 'pristiglo' && rv.mineFor(i.plantId)?.text" class="small muted fst-italic">
+                „{{ rv.mineFor(i.plantId)?.text }}“
               </div>
             </div>
 
@@ -182,7 +187,6 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
             </div>
           </div>
 
-          <!-- cena stavke, na dnu kartice -->
           <div class="item-footer">
             <span class="muted">Ukupno za stavku:</span>
             <strong>{{ i.price * i.quantity }} RSD</strong>
@@ -191,7 +195,6 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
         </article>
       </div>
 
-      <!-- desna kolona: pregled -->
       <aside class="col-lg-4">
         <div class="card summary">
           <div class="card-body">
@@ -230,45 +233,3 @@ async function ask(item: Reservation, action: 'order' | 'cancel' | 'remove') {
     </div>
   </main>
 </template>
-
-<style scoped>
-.empty { text-align: center; padding: 3rem 1rem; background: var(--bs-tertiary-bg); border: 1px dashed var(--bs-border-color); border-radius: 16px; }
-.empty > i { font-size: 3rem; color: var(--leaf-light); margin-bottom: .75rem; }
-
-.item { background: var(--bs-tertiary-bg); }
-.item.cancelled { opacity: .6; }
-.item-grid { display: grid; grid-template-columns: 96px 1fr auto; gap: 1rem; padding: 1rem; }
-.thumb { background: #eef6ee; border-radius: 10px; display: flex; align-items: center; justify-content: center; height: 96px; }
-.thumb img { width: 100%; height: 100%; object-fit: contain; padding: .35rem; }
-.info { display: flex; flex-direction: column; gap: .4rem; }
-.name { font-weight: 600; font-size: 1.1rem; text-decoration: none; }
-.side { display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end; min-width: 150px; }
-
-.item-footer {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: .5rem;
-  padding: .6rem 1rem;
-  border-top: 1px solid var(--bs-border-color);
-}
-.item-footer strong { font-size: 1.15rem; color: var(--leaf-light); }
-
-.qty { display: inline-flex; align-items: center; gap: .5rem; }
-.qty-value { min-width: 2rem; text-align: center; font-weight: 600; }
-
-.rate { display: flex; align-items: center; gap: .15rem; }
-.star-btn { background: none; border: 0; color: #ffc107; font-size: 1.15rem; cursor: pointer; padding: 0 .1rem; }
-.star-btn:hover { transform: scale(1.2); }
-
-.summary { position: sticky; top: 1rem; background: var(--bs-tertiary-bg); }
-.sum-row { display: flex; justify-content: space-between; padding: .3rem 0; }
-.sum-row.total { font-size: 1.3rem; font-weight: 700; color: var(--leaf-light); }
-
-@media (max-width: 575px) {
-  .item-grid { grid-template-columns: 72px 1fr; }
-  .thumb { height: 72px; }
-  .side { grid-column: 1 / -1; align-items: stretch; }
-}
-</style>

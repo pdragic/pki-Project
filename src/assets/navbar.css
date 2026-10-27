@@ -1,0 +1,15 @@
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; background: #1b5e20; position: relative; }
+.topbar .brand { color: #fff; font-weight: 700; font-size: 1.2rem; text-decoration: none; }
+.topbar nav { display: flex; align-items: center; gap: 1.1rem; }
+.topbar nav a, .topbar .link { color: #fff; text-decoration: none; background: none; border: 0; cursor: pointer; font: inherit; opacity: .9; }
+.topbar nav a:hover, .topbar .link:hover { opacity: 1; }
+.topbar nav a.router-link-exact-active { opacity: 1; text-decoration: underline; text-underline-offset: 6px; }
+.topbar .cta { padding: .3rem .8rem; border: 1px solid #fff; border-radius: 8px; }
+.topbar .badge-count { background: #fff; color: #1b5e20; border-radius: 999px; padding: 0 .45rem; font-size: .8rem; margin-left: .25rem; font-weight: 700; }
+.topbar .burger { display: none; background: none; border: 0; color: #fff; font-size: 1.4rem; cursor: pointer; }
+
+@media (max-width: 700px) {
+  .topbar .burger { display: block; }
+  .topbar nav { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: flex-start; background: #1b5e20; padding: 1rem; z-index: 10; }
+  .topbar nav.open { display: flex; }
+}

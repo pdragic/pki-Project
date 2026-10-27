@@ -1,12 +1,8 @@
 export const patterns = {
-  // najmanje dve reči, samo slova (uključujući š, đ, č, ć, ž), dozvoljeni - ' .
   name: /^\p{L}[\p{L}'’.-]+(\s+\p{L}[\p{L}'’.-]+)+$/u,
   email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-  // npr. +381 64 123 4567, 064/123-4567, 0641234567
   phone: /^\+?\d[\d\s/-]{6,14}\d$/,
-  // mora imati slova i broj, npr. "Bulevar kralja Aleksandra 73, Beograd"
   address: /^(?=.*\p{L})(?=.*\d)[\p{L}\d\s.,'’/-]{5,100}$/u,
-  // najmanje 8 karaktera, malo slovo, veliko slovo i cifra, bez razmaka
   password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,64}$/,
 }
 

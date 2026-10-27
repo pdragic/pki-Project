@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { usePlantsStore } from '@/stores/plants'
 import { rules } from '@/utils/validators'
 import { confirmDialog, toast } from '@/utils/alert'
+import FavoritesPicker from '@/components/FavoritesPicker.vue'
 
 const auth = useAuthStore()
+const plants = usePlantsStore()
+onMounted(() => plants.load())
 
-// ---------- podaci profila ----------
-// radimo na kopiji, original se menja tek kad korisnik klikne "Sačuvaj"
 const original = auth.user ? { ...auth.user } : null
 const form = reactive({
   name: original?.name ?? '',
@@ -15,7 +17,14 @@ const form = reactive({
   phone: original?.phone ?? '',
   address: original?.address ?? '',
 })
+const favorites = ref<string[]>([...(original?.favorites ?? [])])
 const error = ref('')
+
+const favError = computed(() =>
+  plants.categories.length && !favorites.value.length
+    ? 'Izaberite bar jednu omiljenu vrstu biljaka.'
+    : '',
+)
 
 function submit() {
   error.value = ''
@@ -23,7 +32,7 @@ function submit() {
 
   const err =
     rules.name(form.name) || rules.email(form.email) ||
-    rules.phone(form.phone) || rules.address(form.address)
+    rules.phone(form.phone) || rules.address(form.address) || favError.value
   if (err) {
     error.value = err
     return
@@ -37,11 +46,14 @@ function submit() {
     return
   }
 
-  Object.assign(auth.user, { ...form, email: form.email.trim() })
+  Object.assign(auth.user, {
+    ...form,
+    email: form.email.trim(),
+    favorites: [...favorites.value],
+  })
   toast('Podaci profila su uspešno sačuvani.')
 }
 
-// ---------- izmena šifre ----------
 const pw = reactive({ current: '', next: '', confirm: '' })
 const pwError = ref('')
 
@@ -72,11 +84,10 @@ async function askChangePassword() {
 </script>
 
 <template>
-  <main class="page" style="max-width: 520px">
+  <main class="page page-form">
     <h1 class="mb-3"><i class="fa-solid fa-circle-user"></i> Moj profil</h1>
 
     <template v-if="auth.user">
-      <!-- podaci profila -->
       <form class="auth-form" novalidate @submit.prevent="submit">
         <h2 class="h5 mb-0"><i class="fa-solid fa-id-card"></i> Lični podaci</h2>
 
@@ -97,6 +108,11 @@ async function askChangePassword() {
           <input v-model="form.address" autocomplete="street-address" />
         </label>
 
+        <div class="d-flex flex-column gap-2">
+          <span><i class="fa-solid fa-heart"></i> Omiljene vrste biljaka</span>
+          <FavoritesPicker v-model="favorites" :options="plants.categories" />
+        </div>
+
         <div v-if="error" role="alert" class="alert alert-danger mb-0">
           <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
         </div>
@@ -108,7 +124,6 @@ async function askChangePassword() {
 
       <hr class="my-4" />
 
-      <!-- izmena šifre -->
       <form class="auth-form" novalidate @submit.prevent="askChangePassword">
         <h2 class="h5 mb-0"><i class="fa-solid fa-key"></i> Promena šifre</h2>
 

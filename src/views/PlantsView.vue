@@ -2,10 +2,11 @@
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlantsStore } from '@/stores/plants'
-import { averageRating } from '@/data/reviews'
+import { useReviewsStore, averageRating } from '@/stores/reviews'
 
 const route = useRoute()
 const store = usePlantsStore()
+const rv = useReviewsStore()
 onMounted(() => store.load())
 
 const f = reactive({
@@ -21,12 +22,14 @@ const f = reactive({
   priceMin: null as number | null,
   priceMax: null as number | null,
   minRating: 0,
+  reviewText: '',
 })
 
 function reset() {
   Object.assign(f, {
     name: '', description: '', category: '', climate: '', season: '', plantType: '',
     audience: '', dateFrom: '', dateTo: '', priceMin: null, priceMax: null, minRating: 0,
+    reviewText: '',
   })
 }
 
@@ -46,6 +49,8 @@ const filtered = computed(() =>
     if (f.priceMin !== null && p.price < f.priceMin) return false
     if (f.priceMax !== null && p.price > f.priceMax) return false
     if (f.minRating && averageRating(p.id) < f.minRating) return false
+    if (f.reviewText &&
+      !rv.forPlant(p.id).some(r => has(r.text, f.reviewText))) return false
     return true
   }),
 )
@@ -53,11 +58,11 @@ const filtered = computed(() =>
 
 <template>
   <main class="page">
-    <h1>Biljke</h1>
+    <h1><i class="fa-solid fa-seedling"></i> Biljke</h1>
 
     <form class="filters" @submit.prevent>
       <label>Naziv <input v-model="f.name" placeholder="npr. Monstera" /></label>
-      <label>Opis / sadnja / nega <input v-model="f.description" placeholder="npr. saksija" /></label>
+      <label>Opis, sadnja ili nega <input v-model="f.description" placeholder="npr. saksija, zalivanje, senka" /></label>
 
       <label>Kategorija
         <select v-model="f.category">
@@ -102,6 +107,7 @@ const filtered = computed(() =>
           <option :value="5">5 ★</option>
         </select>
       </label>
+      <label>Tekst recenzije <input v-model="f.reviewText" placeholder="npr. preporuka" /></label>
 
       <button type="button" class="btn btn-outline-secondary" @click="reset">
         <i class="fa-solid fa-rotate-left"></i> Poništi filtere
@@ -132,46 +138,3 @@ const filtered = computed(() =>
     </template>
   </main>
 </template>
-
-<style scoped>
-.page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: .75rem;
-  margin-bottom: 1rem;
-}
-
-.filters label {
-  display: flex;
-  flex-direction: column;
-  font-size: .9rem;
-  gap: .25rem;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.card {
-  display: block;
-  padding: .75rem;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  text-decoration: none;
-  color: inherit;
-}
-
-.card img {
-  width: 100%;
-  height: 140px;
-  object-fit: contain;
-}
-</style>

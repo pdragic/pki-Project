@@ -31,7 +31,7 @@ async function submit() {
 </script>
 
 <template>
-  <main class="page" style="max-width: 420px">
+  <main class="page page-form">
     <h1 class="mb-3"><i class="fa-solid fa-right-to-bracket"></i> Prijava</h1>
 
     <form class="auth-form" novalidate @submit.prevent="submit">

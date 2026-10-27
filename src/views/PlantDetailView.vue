@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePlantsStore } from '@/stores/plants'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
-import { getReviews, averageRating } from '@/data/reviews'
+import { useReviewsStore } from '@/stores/reviews'
 import { confirmDialog, toast } from '@/utils/alert'
 
 const route = useRoute()
@@ -12,12 +12,14 @@ const router = useRouter()
 const store = usePlantsStore()
 const cart = useCartStore()
 const auth = useAuthStore()
+const rv = useReviewsStore()
 const message = ref('')
 
 onMounted(() => store.load())
 
 const plant = computed(() => store.getById(Number(route.params.id)))
-const reviews = computed(() => (plant.value ? getReviews(plant.value.id) : []))
+const reviewList = computed(() => (plant.value ? rv.forPlant(plant.value.id) : []))
+const average = computed(() => (plant.value ? rv.average(plant.value.id) : 0))
 
 const specs = computed(() => {
   const p = plant.value
@@ -106,7 +108,7 @@ async function reserve() {
 </script>
 
 <template>
-  <main class="page">
+  <main class="page detail-page">
     <p v-if="store.loading" class="muted"><i class="fa-solid fa-spinner fa-spin"></i> Učitavanje...</p>
     <p v-else-if="store.error" role="alert" class="text-danger">{{ store.error }}</p>
     <p v-else-if="!plant">
@@ -125,8 +127,8 @@ async function reserve() {
           <p class="muted fst-italic">{{ plant.latin_name }}</p>
           <p class="stars">
             <i v-for="n in 5" :key="n"
-              :class="[n <= Math.round(averageRating(plant.id)) ? 'fa-solid' : 'fa-regular', 'fa-star']"></i>
-            <span class="muted"> {{ averageRating(plant.id).toFixed(1) }} ({{ reviews.length }} recenzija)</span>
+              :class="[n <= Math.round(average) ? 'fa-solid' : 'fa-regular', 'fa-star']"></i>
+            <span class="muted"> {{ average.toFixed(1) }} ({{ reviewList.length }} recenzija)</span>
           </p>
           <p>{{ plant.description }}</p>
           <p class="price">{{ plant.price }} {{ plant.currency }}</p>
@@ -166,98 +168,33 @@ async function reserve() {
       </section>
 
       <section class="block">
-        <h2><i class="fa-solid fa-comments"></i> Recenzije korisnika</h2>
-        <article v-for="(r, i) in reviews" :key="i" class="review">
-          <div class="d-flex justify-content-between">
-            <strong><i class="fa-solid fa-circle-user muted"></i> {{ r.author }}</strong>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h2 class="mb-0"><i class="fa-solid fa-comments"></i> Recenzije korisnika</h2>
+          <button v-if="auth.isLoggedIn && rv.canReview(plant.id)" class="btn btn-sm btn-outline-warning"
+            @click="rv.openReview(plant.id, plant.name)">
+            <i class="fa-solid fa-pen"></i>
+            {{ rv.mineFor(plant.id) ? 'Izmeni svoju recenziju' : 'Ostavi recenziju' }}
+          </button>
+        </div>
+        <p class="muted small">
+          Recenziju mogu da ostave samo kupci kojima je biljka stigla (status "pristiglo").
+        </p>
+
+        <article v-for="(r, i) in reviewList" :key="i" class="review" :class="{ own: r.own }">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>
+              <i class="fa-solid fa-circle-user muted"></i> {{ r.author }}
+              <span v-if="r.own" class="badge text-bg-success ms-1">Vaša recenzija</span>
+            </strong>
             <span class="stars">
               <i v-for="n in 5" :key="n" :class="[n <= r.rating ? 'fa-solid' : 'fa-regular', 'fa-star']"></i>
             </span>
           </div>
-          <p class="mb-0">{{ r.text }}</p>
+          <p v-if="r.text" class="mb-0 mt-1">{{ r.text }}</p>
+          <p v-else class="mb-0 mt-1 muted small">Bez komentara.</p>
+          <small v-if="r.date" class="muted">{{ r.date }}</small>
         </article>
       </section>
     </div>
   </main>
 </template>
-
-<style scoped>
-.layout {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 2rem;
-  margin: 1.25rem 0;
-}
-
-.img-box {
-  background: #eef6ee;
-  border-radius: 14px;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.img-box img {
-  width: 100%;
-}
-
-.price {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--leaf-light);
-}
-
-.stars {
-  color: #ffc107;
-}
-
-.block {
-  margin-top: 2rem;
-}
-
-.block h2 {
-  font-size: 1.3rem;
-  margin-bottom: 1rem;
-}
-
-.block h2 i {
-  color: var(--leaf-light);
-  margin-right: .35rem;
-}
-
-.specs {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: .75rem;
-}
-
-.spec {
-  display: flex;
-  gap: .75rem;
-  align-items: center;
-  background: var(--bs-tertiary-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: 10px;
-  padding: .6rem .85rem;
-}
-
-.spec>i {
-  color: var(--leaf-light);
-  width: 1.25rem;
-  text-align: center;
-}
-
-.review {
-  background: var(--bs-tertiary-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: 10px;
-  padding: .75rem 1rem;
-  margin-bottom: .6rem;
-}
-
-@media (max-width: 700px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

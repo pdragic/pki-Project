@@ -7,7 +7,7 @@ export interface User {
   email: string
   phone: string
   address: string
-  favorites?: string
+  favorites: string[]
   password: string
 }
 
@@ -27,22 +27,27 @@ function write(key: string, value: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch {
-    // storage nije dostupan, aplikacija nastavlja da radi u memoriji
   }
+}
+
+function readUsers(): User[] {
+  const raw = read<Array<Omit<User, 'favorites'> & { favorites?: unknown }>>(USERS_KEY, [])
+  return raw.map(u => ({
+    ...u,
+    favorites: Array.isArray(u.favorites) ? (u.favorites as string[]) : [],
+  }))
 }
 
 const norm = (email: string) => email.trim().toLowerCase()
 
 export const useAuthStore = defineStore('auth', () => {
-  const users = ref<User[]>(read<User[]>(USERS_KEY, []))
+  const users = ref<User[]>(readUsers())
 
-  // sesija čuva samo id prijavljenog korisnika
   const sessionId = read<string | null>(SESSION_KEY, null)
   const user = ref<User | null>(users.value.find(u => u.id === sessionId) ?? null)
 
   const isLoggedIn = computed(() => user.value !== null)
 
-  // svaka izmena (registracija, izmena profila) se odmah snima
   watch(users, v => write(USERS_KEY, v), { deep: true })
   watch(() => user.value?.id ?? null, id => write(SESSION_KEY, id))
 
@@ -50,7 +55,6 @@ export const useAuthStore = defineStore('auth', () => {
     if (users.value.some(u => norm(u.email) === norm(data.email))) return false
     const newUser: User = { ...data, id: crypto.randomUUID(), email: data.email.trim() }
     users.value.push(newUser)
-    // uzimamo objekat iz niza, da izmene profila menjaju isti zapis
     user.value = users.value[users.value.length - 1] ?? null
     return true
   }

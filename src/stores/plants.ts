@@ -9,7 +9,6 @@ export const usePlantsStore = defineStore('plants', () => {
   const error = ref('')
 
   async function load(force = false) {
-    // već učitano ili učitavanje u toku: ništa se ne radi
     if (loading.value) return
     if (plants.value.length && !force) return
 
